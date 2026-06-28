@@ -1,19 +1,49 @@
+# import sqlite3 and datetime for History system
+from datetime import date
+import sqlite3
+
+# Connect to database
+connection = sqlite3.connect("Calculator_History.db")
+cursor = connection.cursor()
+
+# Create History table
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS History(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT,
+    result TEXT
+)
+""")
+
+connection.commit()
+
 # the main project : a Calculator with Addition, Subtraction, Multiplication, Division, Percent and last used func
+today = date.today()
 class Calculator:
     last_ans = ''
-    History = []
+    
 
     def __init__(self):
         pass
 
-    def Show_History(self):
-        if not Calculator.History:
-            print("Show_History : History is empty!")
+    def Save_History(self, last_ans):
+        cursor.execute(
+            "INSERT INTO History(date, result) VALUES(?, ?)",
+            (str(today), last_ans)
+        )
+        connection.commit()
+
+    def Show_Calculator_History(self):
+        cursor.execute("SELECT date, result FROM History")
+        history = cursor.fetchall()
+
+        if not history:
+            print("Show_Calculator_History : Calculator_History is empty!")
             return
 
-        print("Show_History : History:")
-        for index, item in enumerate(Calculator.History, start=1):
-            print(f"{index}. {item}")
+        print("Show_Calculator_History : Calculator_History:")
+        for index, item in enumerate(history, start=1):
+            print(f"{index}. {item[0]} | {item[1]}")
 
     def Expression(self):
         TorF_val = False
@@ -29,10 +59,10 @@ class Calculator:
                 ans = eval(expression)
                 print(f'Expression : this is your answer : {ans}')
                 Calculator.last_ans = f'{expression} = {ans}'
-                Calculator.History.append(Calculator.last_ans)
-            except:
-                print('Expression : Error: Invalid expression!')
-
+                self.Save_History(Calculator.last_ans)
+            except Exception as e:
+                print("ERROR:", e)
+                
     def Percent(self):
         while True:
             mode = input('Percent : 1 for percent / 2 for increase : ')
@@ -54,13 +84,13 @@ class Calculator:
             ans = (num1 * num2) / 100
             print(f'Percent : this is your answer : {ans}')
             Calculator.last_ans = f'{num2}% of {num1} = {ans}'
-            Calculator.History.append(Calculator.last_ans)
+            self.Save_History(Calculator.last_ans)
 
         elif mode == '2':
             ans = num1 + ((num1 * num2) / 100)
             print(f'Percent : this is your answer : {ans}')
             Calculator.last_ans = f'{num1} increased by {num2}% = {ans}'
-            Calculator.History.append(Calculator.last_ans)
+            self.Save_History(Calculator.last_ans)
 
     def last_ans_func(self):
         if not Calculator.last_ans:
@@ -89,8 +119,5 @@ elif menu1 == '2':
 # last used calc
 q1.last_ans_func()
 
-# History method
-q1.Show_History()
-
-# task1 = history system 
-# task2 = input error when type invalid caracter
+# Calculator_History method
+q1.Show_Calculator_History()
